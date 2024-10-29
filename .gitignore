@@ -25,3 +25,21 @@ dist-ssr
 
 # 第三方工具
 tools/
+
+# 环境变量
+.env
+.env.local
+.env.*.local
+
+# 依赖
+/node_modules
+/server/node_modules
+
+# 构建输出
+/dist
+/build
+
+# 系统文件
+.DS_Store
+.idea/
+.vscode/
