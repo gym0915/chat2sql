@@ -103,11 +103,6 @@ node server/index.js
 
 本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情
 
-## 联系方式
-
-- 项目维护者：[Your Name]
-- Email：[your.email@example.com]
-- 项目主页：[https://github.com/yourusername/chat2sql]
 
 ## 参考资料
 
@@ -116,36 +111,3 @@ node server/index.js
 - [TailwindCSS 文档](https://tailwindcss.com/)
 - [D3.js 文档](https://d3js.org/)
 - [Ollama 文档](https://ollama.ai/)
-
-## 常见问题
-
-1. **如何更新 AI 模型？**
-   - 通过 Ollama 命令行工具更新或安装新模型
-   - 重启应用程序以加载新模型
-
-2. **连接数据库失败怎么办？**
-   - 检查数据库连接信息是否正确
-   - 确保 MySQL 服务正在运行
-   - 检查防火墙设置
-
-3. **如何备份聊天历史？**
-   - 目前聊天历史存储在浏览器本地存储中
-   - 清除浏览器缓存会导致历史记录丢失
-
-## 开发计划
-
-- [ ] 支持更多数据库类型（PostgreSQL、SQLite等）
-- [ ] 添加用户认证系统
-- [ ] 支持数据库结构的导出/导入
-- [ ] 优化自然语言转换的准确性
-- [ ] 添加团队协作功能
-
-## 致谢
-
-感谢所有为本项目做出贡献的开发者和用户。特别感谢以下开源项目：
-
-- React
-- Express
-- TailwindCSS
-- D3.js
-- Ollama
