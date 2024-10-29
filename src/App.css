@@ -1,0 +1,17 @@
+.main-content {
+  display: flex;
+  height: calc(100vh - 60px);
+}
+
+.schema-visualizer {
+  width: 50%;
+  padding: 20px;
+  border-right: 1px solid #ddd;
+}
+
+/* 确保其他内容区域样式适配 */
+.content-area {
+  width: 50%;
+  padding: 20px;
+  overflow-y: auto;
+}

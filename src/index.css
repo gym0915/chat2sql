@@ -1,0 +1,80 @@
+@import 'prismjs/themes/prism.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 现有的样式... */
+
+.learn-button {
+  background-color: #4CAF50;
+  color: white;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-left: 10px;
+}
+
+.learn-button:hover {
+  background-color: #45a049;
+}
+
+/* 修改 SQL 语法高亮样式 */
+.language-sql {
+  font-family: 'Courier New', Courier, monospace !important;
+  font-size: 0.9em !important;
+  line-height: 1.4 !important;
+  background-color: #ffffff !important;
+  white-space: pre-wrap !important;      /* 允许自动换行 */
+  word-break: break-word !important;     /* 在单词内换行 */
+}
+
+/* SQL 关键字样式 */
+.language-sql .keyword { 
+  color: #B146B8 !important;
+  text-shadow: none !important;
+  display: inline-block !important;      /* 让关键词可以换行 */
+  margin-right: 0.5em !important;        /* 关键词之间的间距 */
+}
+
+/* 在特定关键词后添加换行 */
+.language-sql .keyword:matches(SELECT, FROM, WHERE, JOIN, AND, OR, GROUP, ORDER, HAVING) {
+  display: inline-block !important;
+  margin-right: 0 !important;
+  margin-bottom: 0.5em !important;       /* 关键词之间的垂直间距 */
+}
+
+/* 所有非关键字的标记都使用黑色 */
+.language-sql .token:not(.keyword) {
+  color: #000000 !important;
+  text-shadow: none !important; /* 移除文字阴影 */
+}
+
+/* 函数使用深灰色 */
+.language-sql .function { 
+  color: #4A4A4A !important; 
+}
+
+/* 数字保持蓝色 */
+.language-sql .number { 
+  color: #0550AE !important; 
+}
+
+/* 字符串保持深蓝色 */
+.language-sql .string { 
+  color: #0A3069 !important; 
+}
+
+/* 运算符和标点符号使用黑色 */
+.language-sql .operator,
+.language-sql .punctuation { 
+  color: #24292F !important; 
+}
+
+/* 注释保持灰色 */
+.language-sql .comment { 
+  color: #6A737D !important; 
+}
+
+/* 其他样式... */
