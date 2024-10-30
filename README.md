@@ -85,17 +85,6 @@ node server/index.js
 - MySQL2
 - WebSocket
 
-## 项目依赖
-
-详细的依赖版本信息请查看 [requirements.txt](requirements.txt)
-
-## 贡献指南
-
-1. Fork 项目
-2. 创建特性分支 (`git checkout -b feature/AmazingFeature`)
-3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
-4. 推送到分支 (`git push origin feature/AmazingFeature`)
-5. 提交 Pull Request
 
 ## 版本历史
 
