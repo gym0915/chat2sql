@@ -17,30 +17,36 @@
 ### 前置要求
 
 - Node.js >= 16
-- MySQL 数据库
+- MySQL 数据库 8.0.40
 - Ollama (用于 AI 模型支持)
+  - 从 [Ollama官网](https://ollama.com/download) 下载并安装
+  - 模型：
+    - [Qwen2.5-Coder](https://ollama.com/library/qwen2.5-coder)
+    - [DeepSeek-Coder](https://ollama.com/library/deepseek-coder)
 
 ### 安装步骤
 
 1. 克隆项目
 
 2. 安装前端依赖
-bash
+```bash
 npm install
+```
 
 3. 安装后端依赖
-bash
+```bash
 cd server
 npm install
+```
 
 
 4. 启动服务
-bash
-启动前端服务
+```bash
+# 启动前端服务
 npm run dev
-启动后端服务 (新终端)
+# 启动后端服务 (新终端)
 node server/index.js
-
+```
 
 ## 使用说明
 
@@ -111,3 +117,7 @@ node server/index.js
 - [TailwindCSS 文档](https://tailwindcss.com/)
 - [D3.js 文档](https://d3js.org/)
 - [Ollama 文档](https://ollama.ai/)
+- [Ollama 下载](https://ollama.com/download)
+- [BIRD 基准测试](https://bird-bench.github.io/)
+- [Qwen2.5-Coder 模型](https://ollama.com/library/qwen2.5-coder)
+- [DeepSeek-Coder 模型](https://ollama.com/library/deepseek-coder)
