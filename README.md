@@ -20,7 +20,7 @@
 
 - Node.js >= 16
 - MySQL 数据库 8.0.40
-- Ollama (用于 AI 模型支持)
+- Ollama
   - 从 [Ollama官网](https://ollama.com/download) 下载并安装
   - 模型：
     - [Qwen2.5-Coder](https://ollama.com/library/qwen2.5-coder)
@@ -45,7 +45,7 @@ npm install
 4. 启动服务
 ```bash
 # 启动前端服务
-npm run dev
+npm run build && npm run dev
 # 启动后端服务 (新终端)
 node server/index.js
 ```
@@ -77,7 +77,6 @@ node server/index.js
 - TypeScript
 - Vite
 - TailwindCSS
-- D3.js (关系图可视化)
 - React Markdown
 - Prism.js
 
