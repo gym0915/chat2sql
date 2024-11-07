@@ -1,0 +1,68 @@
+- 项目简介
+    一个基于 React 和 Node.js 的智能数据库查询助手，支持自然语言转 SQL 查询，并提供数据库表关系可视化功能。
+
+- 技术栈
+    - 前端技术栈
+        - React.js
+        - tailwind css
+        - Axios用于前后端通信
+        - Redux进行全局状态管理
+    - 后端技术栈*
+        - Node.js + Express.js
+        - Sequelize（MySQL ORM）Node.js ORM（对象关系映射）库，支持MySQL、PostgreSQL、SQLite等
+        - IndexedDB 存储数据
+
+- 文件结构
+    - src/components （UI 组件，体验优化）
+    - src/config: 配置信息
+    - sre/hook: 钩子
+    - src/pages: 前端页面
+    - src/utils: 实用工具（中间件、数据存储、数据库、安全等）
+    - src/api: API 接口
+    - server/routes:路由
+    - core:核心代码、算法等
+    - i18n:国际化
+    - test: 测试
+    - docs:文档，如：readme.md
+
+- 编码规范
+    - typeScript 类型定义规范
+        - 避免使用 any 类型
+        - 如确实需要 any，使用 @ts-ignore 注释说明原因
+    - 组件编写规范
+        - 组件拆分
+    - 状态管理规范
+        - 使用 Context 或状态管理库统一管理
+        - 按照功能模块组织状态
+        - 抽离复杂状态逻辑为 reducer
+    - 样式编写规范
+        - 采用 CSS Modules 或 styled-components
+        - 按组件分离样式文件
+        - 使用 CSS 变量统一管理主题
+    - Tailwind使用规范
+        - 抽取常用样式组合为自定义类
+        - 使用 @apply 指令组织复杂样式
+        - 保持类名顺序一致性
+    - 后端代码规范
+        - 实现统一的错误处理中间件
+        - 定义标准的错误响应格式
+    - 路由组织
+        - 按照 RESTful 规范组织路由
+        - 拆分控制器逻辑
+        - 添加参数验证中间件
+    - 代码注释
+        - 使用 JSDoc 注释
+
+- 安全
+    - 敏感信息:加密存储敏感信息
+    - 后端SQL 注入防护
+- 性能
+    - 使用 IndexedDB 存储大量数据
+    - 实现数据库连接池
+
+- 测试
+    - 使用标准Jest框架进行测试
+    - —为每个控制器和服务编写测试
+    - —为每个api模块编写端到端测试
+
+
