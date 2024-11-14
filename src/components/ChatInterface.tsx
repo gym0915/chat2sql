@@ -7,10 +7,12 @@ import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { tomorrow } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import Toast from './Toast'; // 导入 Toast 组件
+import { ModelSource, ModelOption, SelectedModel } from '../types/model';
+import { logger } from '../utils/logger';
 
 interface ChatInterfaceProps {
-  models: string[];
-  selectedDatabase: string; // 添加选中的数据库名称
+  modelOptions: ModelOption[];
+  selectedDatabase: string;
 }
 
 interface Message {
@@ -166,9 +168,9 @@ const SQLResultTable: React.FC<{ resultData: any[] }> = ({ resultData }) => {
   );
 };
 
-const ChatInterface: React.FC<ChatInterfaceProps> = ({ models, selectedDatabase }) => {
+const ChatInterface: React.FC<ChatInterfaceProps> = ({ modelOptions, selectedDatabase }) => {
   const [inputValue, setInputValue] = useState('');
-  const [selectedModel, setSelectedModel] = useState('');
+  const [selectedModel, setSelectedModel] = useState<SelectedModel | null>(null);
   const [isSelectShaking, setIsSelectShaking] = useState(false);
   const [isInputShaking, setIsInputShaking] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -185,15 +187,21 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ models, selectedDatabase 
     setInputValue(e.target.value);
   };
 
-  const handleModelChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedModel(e.target.value);
+  const handleModelChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const [source, model] = event.target.value.split('|');
+    logger.info(`Model selected - Source: ${source}, Model: ${model}`);
+    
+    setSelectedModel({
+      source: source as ModelSource,
+      model
+    });
   };
 
   const sendSqlRequest = async (prompt: string) => {
     setIsLoading(true); // 开始加载
     try {
       const response = await axios.post('http://localhost:3001/api/generate-sql', {
-        model: selectedModel,
+        model: selectedModel?.model,
         prompt: prompt,
         mark: "sql"
       });
@@ -439,7 +447,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ models, selectedDatabase 
         </button>
       </div>
 
-      {/* 聊天内容区域 */}
+      {/* 聊天内容���域 */}
       <div 
         ref={chatContainerRef}
         className="flex-grow overflow-y-auto p-4 space-y-4"
@@ -466,16 +474,20 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ models, selectedDatabase 
       <div className="flex items-center space-x-2 p-4 bg-white border-t">
         <select
           ref={selectRef}
-          value={selectedModel}
+          value={selectedModel ? `${selectedModel.source}|${selectedModel.model}` : ''}
           onChange={handleModelChange}
           className={`border border-gray-300 rounded-md p-2 ${isSelectShaking ? 'animate-shake' : ''}`}
           disabled={isLoading}
         >
-          <option value="">Selection model</option>
-          {models.map((model) => (
-            <option key={model} value={model}>
-              {model}
-            </option>
+          <option value="">选择模型</option>
+          {modelOptions.map((sourceOption) => (
+            <optgroup key={sourceOption.source} label={sourceOption.source}>
+              {sourceOption.models.map((model) => (
+                <option key={`${sourceOption.source}|${model}`} value={`${sourceOption.source}|${model}`}>
+                  {model}
+                </option>
+              ))}
+            </optgroup>
           ))}
         </select>
 
