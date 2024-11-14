@@ -1,13 +1,20 @@
-# Byte-compiled / optimized / DLL files
-__pycache__/
-*.py[cod]
-*$py.class
+# Cursor files
+.cursorignore
+.cursorrules
 
-# C extensions
-*.so
+# Bolt
+.bolt/
+
+# Vite
+.vite/
+
+# SQL
+*.sql
+
 
 # Distribution / packaging
 .Python
+node_modules/
 build/
 develop-eggs/
 dist/
