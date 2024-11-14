@@ -5,12 +5,20 @@ import ChatInterface from './components/ChatInterface';
 import { parseTableStructure, getLocalModels } from './services/api';
 import type { TableStructure, TableRelation } from './types/database';
 import { Loader2, Network } from 'lucide-react';
+import axios from 'axios';
+import { ModelSource } from './types/model';
+import { logger } from './utils/logger';
 
 interface ConnectionConfig {
   host: string;
   user: string;
   password: string;
   port: string | number;
+}
+
+interface ModelOption {
+  source: ModelSource;
+  models: string[];
 }
 
 function App() {
@@ -31,6 +39,12 @@ function App() {
   const [relations, setRelations] = useState<TableRelation[]>([]);
   const [isSchemaReady, setIsSchemaReady] = useState(false); // 新增状态
   const [localModels, setLocalModels] = useState<string[]>([]); // 新增状态
+  const [modelOptions, setModelOptions] = useState<ModelOption[]>([
+    {
+      source: ModelSource.OLLAMA,
+      models: []
+    }
+  ]);
 
   // 清空所有储数据的函数
   const clearAllStorageData = () => {
@@ -329,6 +343,28 @@ function App() {
     setIsSchemaReady(false);
   };
 
+  // 修改获取模型的逻辑
+  useEffect(() => {
+    const fetchModels = async () => {
+      try {
+        const response = await axios.get('http://localhost:3001/api/local-models');
+        if (response.data.models) {
+          setModelOptions(prev => prev.map(option => 
+            option.source === ModelSource.OLLAMA 
+              ? { ...option, models: response.data.models }
+              : option
+          ));
+        }
+      } catch (error) {
+        logger.error('获取模型列表失败:', error);
+      }
+    };
+
+    if (isSchemaReady) {
+      fetchModels();
+    }
+  }, [isSchemaReady]);
+
   return (
     <div className="h-screen bg-gray-50 flex flex-col overflow-hidden">
       <Header onDatabasesLoad={handleDatabasesLoad} />
@@ -405,7 +441,7 @@ function App() {
           <div className="flex-1 bg-white rounded-lg shadow-sm h-full flex flex-col">
             {isSchemaReady && (
               <ChatInterface 
-                models={localModels} 
+                modelOptions={modelOptions}
                 selectedDatabase={selectedDb}
               />
             )}
