@@ -234,6 +234,35 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ modelOptions, selectedDat
       }
     } catch (error) {
       console.error('发送请求失败:', error);
+      
+      // 获取错误信息
+      let errorMessage = '发送请求失败';
+      if (axios.isAxiosError(error)) {
+        if (error.response) {
+          // 服务器返回了错误响应
+          errorMessage = error.response.data.message || error.response.data.error || '服务器返回错误';
+        } else if (error.request) {
+          // 请求发出但没有收到响应
+          errorMessage = '无法连接到服务器';
+        } else {
+          // 请求配置出错
+          errorMessage = error.message;
+        }
+      } else {
+        // 非 Axios 错误
+        errorMessage = error instanceof Error ? error.message : '未知错误';
+      }
+      
+      // 显示错误提示
+      setShowToast(true);
+      setCopySuccess(errorMessage);
+      
+      // 3秒后关闭提示
+      setTimeout(() => {
+        setShowToast(false);
+        setCopySuccess(null);
+      }, 3000);
+      
     } finally {
       setIsLoading(false);
     }
@@ -454,7 +483,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ modelOptions, selectedDat
   };
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col relative">
       <div className="h-12 flex justify-between items-center px-4 border-b border-gray-200">
         <div className="text-sm text-gray-600">Chat History</div>
         <button
@@ -466,7 +495,18 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ modelOptions, selectedDat
         </button>
       </div>
 
-      {/* 聊天内容域 */}
+      {/* Toast 组件移到这里 */}
+      {showToast && copySuccess && (
+        <Toast 
+          message={copySuccess}
+          type="error"
+          onClose={() => {
+            setShowToast(false);
+            setCopySuccess(null);
+          }}
+        />
+      )}
+
       {/* 聊天内容域 */}
       <div 
         ref={chatContainerRef}
@@ -573,13 +613,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ modelOptions, selectedDat
           </button>
         </div>
       </div>
-
-      {showToast && (
-        <Toast
-          message="已复制到剪贴"
-          onClose={() => setShowToast(false)}
-        />
-      )}
     </div>
   );
 };

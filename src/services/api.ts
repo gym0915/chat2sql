@@ -112,16 +112,16 @@ export const getLocalModels = async (): Promise<string[]> => {
 
 export const getHuggingFaceModels = async (): Promise<string[]> => {
   try {
-    const apiToken = import.meta.env.VITE_HUGGINGFACE_API_TOKEN;
-    console.log("huggingface apiToken", apiToken);
-    if (!apiToken) {
-      throw new Error('未设置 HUGGINGFACE_API_TOKEN');
-    }
-
     const response = await axios.get('http://localhost:3001/api/huggingface-models');
+    
+    if (!response.data.models) {
+      throw new Error('获取模型列表失败: 响应格式错误');
+    }
+    
     return response.data.models;
   } catch (error) {
     console.error('获取 HuggingFace 模型失败:', error);
-    throw error;
+    // 返回一个空数组而不是抛出错误,这样即使获取失败也不会影响其他功能
+    return [];
   }
 };

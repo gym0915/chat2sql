@@ -10,11 +10,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@huggingface/inference": "^2.8.1",
     "@types/prismjs": "^1.26.5",
     "axios": "^1.6.7",
     "clsx": "^2.1.0",
     "d3": "^7.9.0",
     "dotenv": "^16.4.5",
+    "https-proxy-agent": "^7.0.5",
     "lucide-react": "^0.344.0",
     "prismjs": "^1.29.0",
     "react": "^18.3.1",

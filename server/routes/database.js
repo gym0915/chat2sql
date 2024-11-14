@@ -10,8 +10,13 @@ import { getAxiosProxyConfig } from '../utils/proxyConfig.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// 配置 dotenv，使用新的路径解析方式
-dotenv.config({ path: resolve(__dirname, '../.env') });
+// 修改这里：配置 dotenv，使用正确的路径
+dotenv.config({ 
+  path: resolve(__dirname, '../../.env') // 注意这里改为 ../../.env
+});
+
+// 添加环境变量加载确认日志
+console.log('环境变量 HUGGINGFACE_MODELS:', process.env.HUGGINGFACE_MODELS);
 
 const router = express.Router();
 
@@ -248,23 +253,62 @@ router.post('/generate-sql', async (req, res) => {
       console.log("response from ollama",generatedContent);
       
     } else if (source === 'HuggingFace') {
-      // 获取代理配置
-      const axiosConfig = getAxiosProxyConfig();
-      
-      // 调用 HuggingFace API
-      const huggingfaceResponse = await axios.post(
-        `https://api-inference.huggingface.co/models/${model}`,
-        { inputs: prompt },
-        {
+      try {
+        const token = process.env.HUGGINGFACE_API_TOKEN?.trim(); // 添加 trim() 去除可能的空格
+        console.log("使用的 token:", token);
+        
+        if (!token) {
+          throw new Error('HuggingFace API token not found in environment variables');
+        }
+        
+        const axiosConfig = {
+          ...getAxiosProxyConfig(),
           headers: {
-            'Authorization': `Bearer ${process.env.HUGGINGFACE_API_TOKEN}`,
+            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
           },
-          ...axiosConfig
+          validateStatus: status => status < 500 // 允许非 500 错误被正常捕获
+        };
+
+        console.log('请求配置:', {
+          url: `https://api-inference.huggingface.co/models/${model}`,
+          headers: axiosConfig.headers,
+          proxy: axiosConfig.proxy
+        });
+
+        const huggingfaceResponse = await axios.post(
+          `https://api-inference.huggingface.co/models/${model}`,
+          { inputs: prompt },
+          axiosConfig
+        );
+
+        if (huggingfaceResponse.data) {
+          generatedContent = huggingfaceResponse.data[0]?.generated_text || huggingfaceResponse.data;
+        } else {
+          throw new Error('无效的 HuggingFace API 响应格式');
         }
-      );
-      generatedContent = huggingfaceResponse.data[0].generated_text;
-      console.log("response from huggingface",generatedContent);
+        console.log("HuggingFace 响应:", generatedContent);
+
+      } catch (error) {
+        // 增强错误日志
+        console.error('HuggingFace API 调用失败:', {
+          message: error.message,
+          response: {
+            data: error.response?.data,
+            status: error.response?.status,
+            headers: error.response?.headers,
+            config: error.config
+          },
+          stack: error.stack
+        });
+        
+        // 返回更具体的错误信息
+        throw new Error(`调用 HuggingFace API 失败: ${
+          error.response?.data?.error || 
+          error.message || 
+          '未知错误'
+        }`);
+      }
     } else {
       throw new Error('不支持的模型来源');
     }
@@ -361,77 +405,28 @@ router.get('/api/sql', async (req, res) => {
 
 router.get('/huggingface-models', async (req, res) => {
   try {
-    const apiToken = process.env.HUGGINGFACE_API_TOKEN;
-    console.log("huggingface apiToken", apiToken);
-    if (!apiToken) {
-      throw new Error('未设置 HUGGINGFACE_API_TOKEN');
+    // 从环境变量读取预设的模型列表
+    const modelsStr = process.env.HUGGINGFACE_MODELS;
+    
+    // 添加更详细的日志
+    console.log('读取到的环境变量值:', modelsStr);
+    
+    if (!modelsStr) {
+      console.error('环境变量 HUGGINGFACE_MODELS 未设置或为空');
+      throw new Error('未在环境变量中设置 HUGGINGFACE_MODELS');
     }
 
-    // 使用预设的模型列表，避免网络问题
-    const defaultModels = [
-      'meta-llama/Llama-2-7b-chat-hf',
-      'tiiuae/falcon-7b-instruct',
-      'mistralai/Mistral-7B-Instruct-v0.1',
-      'microsoft/phi-2',
-      'HuggingFaceH4/zephyr-7b-beta'
-    ];
-
-    try {
-      // 构建请求配置
-      const requestConfig = {
-        headers: {
-          'Authorization': `Bearer ${apiToken}`,
-          'Accept': 'application/json'
-        },
-        timeout: 5000  // 5秒超时
-      };
-
-      // 根据环境变量配置代理
-      if (process.env.PROXY_ENABLED === 'true') {
-        console.log('使用代理配置:', {
-          host: process.env.PROXY_HOST,
-          port: process.env.PROXY_PORT,
-          protocol: process.env.PROXY_PROTOCOL
-        });
-
-        requestConfig.proxy = {
-          host: process.env.PROXY_HOST,
-          port: parseInt(process.env.PROXY_PORT || '7890'),
-          protocol: process.env.PROXY_PROTOCOL
-        };
-      } else {
-        console.log('未启用代理');
-      }
-
-      // 尝试从 API 获取模型
-      const response = await axios.get(
-        'https://huggingface.co/api/models?filter=text-generation', 
-        requestConfig
-      );
-
-      if (response.data && Array.isArray(response.data)) {
-        const models = response.data
-          .filter(model => model.modelId && typeof model.modelId === 'string')
-          .map(model => model.modelId)
-          .slice(0, 10);
-        
-        console.log('成功从 API 获取模型列表:', models);
-        res.json({ models });
-      } else {
-        throw new Error('无效的 API 响应格式');
-      }
-    } catch (apiError) {
-      // API 请求失败时使用默认模型列表
-      console.warn('API 请求失败，使用默认模型列表:', apiError.message);
-      res.json({ 
-        models: defaultModels,
-        source: 'default'
-      });
-    }
+    // 将字符串转换为数组 (假设环境变量中模型名用逗号分隔)
+    const models = modelsStr.split(',').map(model => model.trim());
+    
+    console.log('解析后的 HuggingFace 模型列表:', models);
+    res.json({ models });
+    
   } catch (error) {
     console.error('获取 HuggingFace 模型失败:', {
       message: error.message,
-      code: error.code
+      code: error.code,
+      env: process.env.HUGGINGFACE_MODELS // 添加环境变量值到错误日志
     });
 
     res.status(500).json({ 

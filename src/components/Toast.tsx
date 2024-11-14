@@ -2,22 +2,30 @@ import React, { useEffect } from 'react';
 
 interface ToastProps {
   message: string;
-  duration?: number;
+  type?: 'error' | 'success' | 'info';
   onClose: () => void;
 }
 
-const Toast: React.FC<ToastProps> = ({ message, duration = 2000, onClose }) => {
+const Toast: React.FC<ToastProps> = ({ message, type = 'info', onClose }) => {
   useEffect(() => {
     const timer = setTimeout(() => {
       onClose();
-    }, duration);
+    }, 3000);
 
     return () => clearTimeout(timer);
-  }, [duration, onClose]);
+  }, [onClose]);
+
+  const bgColor = {
+    error: 'bg-red-500',
+    success: 'bg-green-500',
+    info: 'bg-blue-500'
+  }[type];
 
   return (
-    <div className="fixed bottom-4 right-4 bg-gray-800 text-white px-4 py-2 rounded-md shadow-lg">
-      {message}
+    <div className="absolute left-1/2 bottom-24 -translate-x-1/2 transform z-50">
+      <div className={`${bgColor} text-white px-6 py-3 rounded-lg shadow-lg text-center min-w-[200px]`}>
+        {message}
+      </div>
     </div>
   );
 };
