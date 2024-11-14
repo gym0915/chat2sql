@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { useTable, usePagination } from 'react-table';
-import { Clipboard, Play, Check, User, Code, Loader, PlusCircle } from 'lucide-react';
+import { Clipboard, Play, Check, User, Code, Loader, PlusCircle, ChevronRight } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
@@ -166,9 +166,15 @@ const SQLResultTable: React.FC<{ resultData: any[] }> = ({ resultData }) => {
   );
 };
 
+// 添加新的接口定义
+interface ModelGroup {
+  source: string;
+  models: string[];
+}
+
 const ChatInterface: React.FC<ChatInterfaceProps> = ({ models, selectedDatabase }) => {
   const [inputValue, setInputValue] = useState('');
-  const [selectedModel, setSelectedModel] = useState('');
+  const [selectedModel, setSelectedModel] = useState<{source: string; model: string} | null>(null);
   const [isSelectShaking, setIsSelectShaking] = useState(false);
   const [isInputShaking, setIsInputShaking] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -180,20 +186,32 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ models, selectedDatabase 
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false); // 新增状态来跟踪是否正在等待响应
   const [isRunningSQL, setIsRunningSQL] = useState(false);
+  const [isSelectOpen, setIsSelectOpen] = useState(false);
+
+  // 添加模型分组数据
+  const modelGroups: ModelGroup[] = [
+    {
+      source: 'Ollama',
+      models: models // 当前的模型列表都是来自 Ollama
+    }
+    // 未来可以添加其他来源的模型组
+  ];
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value);
   };
 
-  const handleModelChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedModel(e.target.value);
+  // 修改模型选择处理函数
+  const handleModelSelect = (source: string, model: string) => {
+    setSelectedModel({ source, model });
+    console.log(`Selected model: ${model} from source: ${source}`);
   };
 
   const sendSqlRequest = async (prompt: string) => {
     setIsLoading(true); // 开始加载
     try {
       const response = await axios.post('http://localhost:3001/api/generate-sql', {
-        model: selectedModel,
+        model: selectedModel?.model, // 只发送模型名称
         prompt: prompt,
         mark: "sql"
       });
@@ -421,7 +439,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ models, selectedDatabase 
   // 添加键盘事件处理函数
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault(); // 阻止默认的回车换行行为
+      e.preventDefault(); // 阻止默的回车换行行为
       handleSend();
     }
   };
@@ -464,20 +482,37 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ models, selectedDatabase 
 
       {/* 输入区域 */}
       <div className="flex items-center space-x-2 p-4 bg-white border-t">
-        <select
-          ref={selectRef}
-          value={selectedModel}
-          onChange={handleModelChange}
-          className={`border border-gray-300 rounded-md p-2 ${isSelectShaking ? 'animate-shake' : ''}`}
-          disabled={isLoading}
-        >
-          <option value="">Selection model</option>
-          {models.map((model) => (
-            <option key={model} value={model}>
-              {model}
-            </option>
-          ))}
-        </select>
+        <div className="relative">
+          <div className={`border border-gray-300 rounded-md ${isSelectShaking ? 'animate-shake' : ''}`}>
+            <select
+              ref={selectRef}
+              className="appearance-none w-48 px-4 py-2 bg-white border-0 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-md"
+              value={selectedModel?.model || ''}
+              onChange={(e) => {
+                const selectedSource = 'Ollama'; // 当前只有 Ollama 源
+                console.log(`Selected model: ${e.target.value} from source: ${selectedSource}`);
+                handleModelSelect(selectedSource, e.target.value);
+              }}
+              disabled={isLoading}
+              style={{
+                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236B7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
+                backgroundRepeat: 'no-repeat',
+                backgroundPosition: 'right 0.5rem center',
+                backgroundSize: '1.5em 1.5em',
+                paddingRight: '2.5rem'
+              }}
+            >
+              <option value="" disabled>Select Model</option>
+              <optgroup label="Ollama">
+                {models.map(model => (
+                  <option key={model} value={model}>
+                    {model}
+                  </option>
+                ))}
+              </optgroup>
+            </select>
+          </div>
+        </div>
 
         <div className="flex-grow relative">
           <input

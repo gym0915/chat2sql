@@ -15,6 +15,7 @@
 # Distribution / packaging
 .Python
 node_modules/
+server/node_modules/
 build/
 develop-eggs/
 dist/

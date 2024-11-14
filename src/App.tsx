@@ -145,16 +145,16 @@ function App() {
         console.log('表结构详情:', data.tableStructures);
 
         // 解析 data.tableStructures 并拼装 createSQL 和示例数据
-        const allCreateSQL = data.tableStructures.map((table: any) => {
-          return `${table.createSQL}\n\n-- 示例查询:\n${table.sampleQuery}\n-- 示例数据:\n${
-            JSON.stringify(table.sampleData, null, 2)
-          }\n`;
-        }).join('\n\n');
-
         // const allCreateSQL = data.tableStructures.map((table: any) => {
-        //   return `${table.createSQL}\n\n
+        //   return `${table.createSQL}\n\n-- 示例查询:\n${table.sampleQuery}\n-- 示例数据:\n${
+        //     JSON.stringify(table.sampleData, null, 2)
         //   }\n`;
         // }).join('\n\n');
+
+        const allCreateSQL = data.tableStructures.map((table: any) => {
+          return `${table.createSQL}\n\n
+          }\n`;
+        }).join('\n\n');
         
         // 保存到浏览器的 localStorage 中
         localStorage.setItem('allCreateSQL', allCreateSQL);
