@@ -199,8 +199,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ modelOptions, selectedDat
     // 未来可以添加其他来源的模型组
   ];
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInputValue(e.target.value);
+  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setInputValue(event.target.value);
   };
 
   const handleModelChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
@@ -466,6 +466,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ modelOptions, selectedDat
         </button>
       </div>
 
+      {/* 聊天内容域 */}
       {/* 聊天内容域 */}
       <div 
         ref={chatContainerRef}
