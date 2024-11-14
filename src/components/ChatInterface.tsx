@@ -168,21 +168,15 @@ const SQLResultTable: React.FC<{ resultData: any[] }> = ({ resultData }) => {
   );
 };
 
-<<<<<<< HEAD
 // 添加新的接口定义
 interface ModelGroup {
   source: string;
   models: string[];
 }
 
-const ChatInterface: React.FC<ChatInterfaceProps> = ({ models, selectedDatabase }) => {
-  const [inputValue, setInputValue] = useState('');
-  const [selectedModel, setSelectedModel] = useState<{source: string; model: string} | null>(null);
-=======
 const ChatInterface: React.FC<ChatInterfaceProps> = ({ modelOptions, selectedDatabase }) => {
   const [inputValue, setInputValue] = useState('');
   const [selectedModel, setSelectedModel] = useState<SelectedModel | null>(null);
->>>>>>> 6cdca66e0d6250ed6479a0319f4d2841e6c385a7
   const [isSelectShaking, setIsSelectShaking] = useState(false);
   const [isInputShaking, setIsInputShaking] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -192,29 +186,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ modelOptions, selectedDat
   const [copySuccess, setCopySuccess] = useState<string | null>(null);
   const [showToast, setShowToast] = useState(false);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
-  const [isLoading, setIsLoading] = useState(false); // 新增状态来跟踪是否正在等待响应
+  const [isLoading, setIsLoading] = useState(false);
   const [isRunningSQL, setIsRunningSQL] = useState(false);
-  const [isSelectOpen, setIsSelectOpen] = useState(false);
 
-  // 添加模型分组数据
-  const modelGroups: ModelGroup[] = [
-    {
-      source: 'Ollama',
-      models: models // 当前的模型列表都是来自 Ollama
-    }
-    // 未来可以添加其他来源的模型组
-  ];
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInputValue(e.target.value);
-  };
-
-<<<<<<< HEAD
-  // 修改模型选择处理函数
-  const handleModelSelect = (source: string, model: string) => {
-    setSelectedModel({ source, model });
-    console.log(`Selected model: ${model} from source: ${source}`);
-=======
   const handleModelChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const [source, model] = event.target.value.split('|');
     logger.info(`Model selected - Source: ${source}, Model: ${model}`);
@@ -223,18 +197,13 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ modelOptions, selectedDat
       source: source as ModelSource,
       model
     });
->>>>>>> 6cdca66e0d6250ed6479a0319f4d2841e6c385a7
   };
 
   const sendSqlRequest = async (prompt: string) => {
     setIsLoading(true); // 开始加载
     try {
       const response = await axios.post('http://localhost:3001/api/generate-sql', {
-<<<<<<< HEAD
-        model: selectedModel?.model, // 只发送模型名称
-=======
         model: selectedModel?.model,
->>>>>>> 6cdca66e0d6250ed6479a0319f4d2841e6c385a7
         prompt: prompt,
         mark: "sql"
       });
@@ -467,6 +436,14 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ modelOptions, selectedDat
     }
   };
 
+  /**
+   * 处理输入框值变化
+   * @param event 输入框变化事件
+   */
+  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setInputValue(event.target.value);
+  };
+
   return (
     <div className="flex flex-col h-full">
       <div className="h-12 flex justify-between items-center px-4 border-b border-gray-200">
@@ -480,7 +457,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ modelOptions, selectedDat
         </button>
       </div>
 
-      {/* 聊天内容���域 */}
+      {/* 聊天内容域 */}
       <div 
         ref={chatContainerRef}
         className="flex-grow overflow-y-auto p-4 space-y-4"
@@ -505,18 +482,13 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ modelOptions, selectedDat
 
       {/* 输入区域 */}
       <div className="flex items-center space-x-2 p-4 bg-white border-t">
-<<<<<<< HEAD
         <div className="relative">
           <div className={`border border-gray-300 rounded-md ${isSelectShaking ? 'animate-shake' : ''}`}>
             <select
               ref={selectRef}
               className="appearance-none w-48 px-4 py-2 bg-white border-0 focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-md"
-              value={selectedModel?.model || ''}
-              onChange={(e) => {
-                const selectedSource = 'Ollama'; // 当前只有 Ollama 源
-                console.log(`Selected model: ${e.target.value} from source: ${selectedSource}`);
-                handleModelSelect(selectedSource, e.target.value);
-              }}
+              value={selectedModel ? `${selectedModel.source}|${selectedModel.model}` : ''}
+              onChange={handleModelChange}
               disabled={isLoading}
               style={{
                 backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236B7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
@@ -526,37 +498,19 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ modelOptions, selectedDat
                 paddingRight: '2.5rem'
               }}
             >
-              <option value="" disabled>Select Model</option>
-              <optgroup label="Ollama">
-                {models.map(model => (
-                  <option key={model} value={model}>
-                    {model}
-                  </option>
-                ))}
-              </optgroup>
+              <option value="">选择模型</option>
+              {modelOptions.map((sourceOption) => (
+                <optgroup key={sourceOption.source} label={sourceOption.source}>
+                  {sourceOption.models.map((model) => (
+                    <option key={`${sourceOption.source}|${model}`} value={`${sourceOption.source}|${model}`}>
+                      {model}
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
             </select>
           </div>
         </div>
-=======
-        <select
-          ref={selectRef}
-          value={selectedModel ? `${selectedModel.source}|${selectedModel.model}` : ''}
-          onChange={handleModelChange}
-          className={`border border-gray-300 rounded-md p-2 ${isSelectShaking ? 'animate-shake' : ''}`}
-          disabled={isLoading}
-        >
-          <option value="">选择模型</option>
-          {modelOptions.map((sourceOption) => (
-            <optgroup key={sourceOption.source} label={sourceOption.source}>
-              {sourceOption.models.map((model) => (
-                <option key={`${sourceOption.source}|${model}`} value={`${sourceOption.source}|${model}`}>
-                  {model}
-                </option>
-              ))}
-            </optgroup>
-          ))}
-        </select>
->>>>>>> 6cdca66e0d6250ed6479a0319f4d2841e6c385a7
 
         <div className="flex-grow relative">
           <input
