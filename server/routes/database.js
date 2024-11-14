@@ -1,6 +1,17 @@
 import express from 'express';
 import mysql from 'mysql2/promise';
 import axios from 'axios'; // 确保已经导入 axios
+import dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
+import { dirname, resolve } from 'path';
+import { getAxiosProxyConfig } from '../utils/proxyConfig.js';
+
+// 获取 ES Module 的 __dirname 等价物
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// 配置 dotenv，使用新的路径解析方式
+dotenv.config({ path: resolve(__dirname, '../.env') });
 
 const router = express.Router();
 
@@ -221,35 +232,48 @@ router.get('/local-models', async (req, res) => {
 
 // 修改 SQL 生成请求的路由处理
 router.post('/generate-sql', async (req, res) => {
-  const { model, prompt, mark } = req.body;
-  console.log('收到 SQL 生成请求:');
-  console.log('选择的模型:', model);
-  console.log('完整的提示内容:', prompt);
-  console.log('标志符:', mark);
+  const { source, model, prompt, mark } = req.body;
+  console.log('收到 SQL 生成请求:', { source, model, prompt });
 
   try {
-    // 调用 Ollama API
-    const ollamaResponse = await axios.post('http://localhost:11434/api/generate', {
-      model: model,
-      prompt: prompt,
-      stream: false
-    });
+    let generatedContent;
+    if (source === 'Ollama') {
+      // 调用 Ollama API
+      const ollamaResponse = await axios.post('http://localhost:11434/api/generate', {
+        model: model,
+        prompt: prompt,
+        stream: false
+      });
+      generatedContent = ollamaResponse.data.response;
+      console.log("response from ollama",generatedContent);
+      
+    } else if (source === 'HuggingFace') {
+      // 获取代理配置
+      const axiosConfig = getAxiosProxyConfig();
+      
+      // 调用 HuggingFace API
+      const huggingfaceResponse = await axios.post(
+        `https://api-inference.huggingface.co/models/${model}`,
+        { inputs: prompt },
+        {
+          headers: {
+            'Authorization': `Bearer ${process.env.HUGGINGFACE_API_TOKEN}`,
+            'Content-Type': 'application/json'
+          },
+          ...axiosConfig
+        }
+      );
+      generatedContent = huggingfaceResponse.data[0].generated_text;
+      console.log("response from huggingface",generatedContent);
+    } else {
+      throw new Error('不支持的模型来源');
+    }
 
-    const generatedContent = ollamaResponse.data.response;
-    console.log('Ollama 生成的内容:', generatedContent);
-
-     // 使用正则表达式提取SQL代码块
-     const sqlRegex = /```sql\n([\s\S]*?)```/;
-     const match = generatedContent.match(sqlRegex);
-     
-     // 提取SQL语句（不带markdown标记）
-     const sqlContent = match ? match[1].trim() : generatedContent.trim();
-     
-     // 重新包装成markdown格式
-     const markdownSQL = `\`\`\`sql\n${sqlContent}\n\`\`\``;
-     
-     console.log("处理后的SQL:", markdownSQL);
-
+    // 通用的 SQL 处理逻辑
+    const sqlRegex = /```sql\n([\s\S]*?)```/;
+    const match = generatedContent.match(sqlRegex);
+    const sqlContent = match ? match[1].trim() : generatedContent.trim();
+    const markdownSQL = `\`\`\`sql\n${sqlContent}\n\`\`\``;
 
     res.json({ 
       success: true, 
@@ -257,7 +281,7 @@ router.post('/generate-sql', async (req, res) => {
       mark: mark
     });
   } catch (error) {
-    console.error('调用 Ollama API 失败:', error);
+    console.error('生成 SQL 失败:', error);
     res.status(500).json({ 
       success: false, 
       message: '生成 SQL 失败',
@@ -332,6 +356,92 @@ router.get('/api/sql', async (req, res) => {
     res.json({ content: markdownSql });
   } catch (error) {
     res.status(500).send('Server Error');
+  }
+});
+
+router.get('/huggingface-models', async (req, res) => {
+  try {
+    const apiToken = process.env.HUGGINGFACE_API_TOKEN;
+    console.log("huggingface apiToken", apiToken);
+    if (!apiToken) {
+      throw new Error('未设置 HUGGINGFACE_API_TOKEN');
+    }
+
+    // 使用预设的模型列表，避免网络问题
+    const defaultModels = [
+      'meta-llama/Llama-2-7b-chat-hf',
+      'tiiuae/falcon-7b-instruct',
+      'mistralai/Mistral-7B-Instruct-v0.1',
+      'microsoft/phi-2',
+      'HuggingFaceH4/zephyr-7b-beta'
+    ];
+
+    try {
+      // 构建请求配置
+      const requestConfig = {
+        headers: {
+          'Authorization': `Bearer ${apiToken}`,
+          'Accept': 'application/json'
+        },
+        timeout: 5000  // 5秒超时
+      };
+
+      // 根据环境变量配置代理
+      if (process.env.PROXY_ENABLED === 'true') {
+        console.log('使用代理配置:', {
+          host: process.env.PROXY_HOST,
+          port: process.env.PROXY_PORT,
+          protocol: process.env.PROXY_PROTOCOL
+        });
+
+        requestConfig.proxy = {
+          host: process.env.PROXY_HOST,
+          port: parseInt(process.env.PROXY_PORT || '7890'),
+          protocol: process.env.PROXY_PROTOCOL
+        };
+      } else {
+        console.log('未启用代理');
+      }
+
+      // 尝试从 API 获取模型
+      const response = await axios.get(
+        'https://huggingface.co/api/models?filter=text-generation', 
+        requestConfig
+      );
+
+      if (response.data && Array.isArray(response.data)) {
+        const models = response.data
+          .filter(model => model.modelId && typeof model.modelId === 'string')
+          .map(model => model.modelId)
+          .slice(0, 10);
+        
+        console.log('成功从 API 获取模型列表:', models);
+        res.json({ models });
+      } else {
+        throw new Error('无效的 API 响应格式');
+      }
+    } catch (apiError) {
+      // API 请求失败时使用默认模型列表
+      console.warn('API 请求失败，使用默认模型列表:', apiError.message);
+      res.json({ 
+        models: defaultModels,
+        source: 'default'
+      });
+    }
+  } catch (error) {
+    console.error('获取 HuggingFace 模型失败:', {
+      message: error.message,
+      code: error.code
+    });
+
+    res.status(500).json({ 
+      error: '获取 HuggingFace 模型失败',
+      details: {
+        message: error.message,
+        code: error.code,
+        type: error.name
+      }
+    });
   }
 });
 

@@ -78,3 +78,50 @@
 }
 
 /* 其他样式... */
+
+/* 自定义下拉列表样式 */
+select option, 
+select optgroup {
+  width: auto;
+  min-width: 100%;
+  white-space: nowrap;
+}
+
+/* 确保下拉列表可以超出父容器宽度 */
+select {
+  position: relative;
+}
+
+/* 下拉列表展开时的样式 */
+select:focus {
+  width: auto;
+  position: relative;
+  z-index: 50;
+}
+
+/* 优化下拉列表的选项样式 */
+select option {
+  padding: 0.5rem 1rem;
+}
+
+select optgroup {
+  padding: 0.25rem 0;
+}
+
+/* 添加滚动条样式 */
+select::-webkit-scrollbar {
+  width: 8px;
+}
+
+select::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+select::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+select::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}

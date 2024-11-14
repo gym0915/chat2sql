@@ -109,3 +109,19 @@ export const getLocalModels = async (): Promise<string[]> => {
     throw error;
   }
 };
+
+export const getHuggingFaceModels = async (): Promise<string[]> => {
+  try {
+    const apiToken = import.meta.env.VITE_HUGGINGFACE_API_TOKEN;
+    console.log("huggingface apiToken", apiToken);
+    if (!apiToken) {
+      throw new Error('未设置 HUGGINGFACE_API_TOKEN');
+    }
+
+    const response = await axios.get('http://localhost:3001/api/huggingface-models');
+    return response.data.models;
+  } catch (error) {
+    console.error('获取 HuggingFace 模型失败:', error);
+    throw error;
+  }
+};

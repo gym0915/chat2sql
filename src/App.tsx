@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Header from './components/Header';
 import SchemaVisualizer from './components/Database/SchemaVisualizer';
 import ChatInterface from './components/ChatInterface';
-import { parseTableStructure, getLocalModels } from './services/api';
+import { parseTableStructure, getLocalModels, getHuggingFaceModels } from './services/api';
 import type { TableStructure, TableRelation } from './types/database';
 import { Loader2, Network } from 'lucide-react';
 import axios from 'axios';
@@ -42,6 +42,10 @@ function App() {
   const [modelOptions, setModelOptions] = useState<ModelOption[]>([
     {
       source: ModelSource.OLLAMA,
+      models: []
+    },
+    {
+      source: ModelSource.HUGGINGFACE,
       models: []
     }
   ]);
@@ -119,6 +123,22 @@ function App() {
     setDatabases(databases);
     setConnectionConfig(config);
     localStorage.setItem('dbConnectionConfig', JSON.stringify(config));
+  };
+
+  const fetchModels = async () => {
+    try {
+      const response = await axios.get('http://localhost:3001/api/local-models');
+      if (response.data.models) {
+        setModelOptions(prev => prev.map(option => 
+          option.source === ModelSource.OLLAMA 
+            ? { ...option, models: response.data.models }
+            : option
+        ));
+        console.log('成功获取模型:', response.data.models);
+      }
+    } catch (error) {
+      console.error('获取模型列表失败:', error);
+    }
   };
 
   const handleLearn = async () => {
@@ -291,15 +311,36 @@ function App() {
         }));
 
         // 在这里调用 getLocalModels
-        try {
-          const models = await getLocalModels();
-          setLocalModels(models);
-          console.log("获取本地模型成功:", models);
-          setIsSchemaReady(true);
-        } catch (error) {
-          console.error('获取本地模型失败:', error);
-        }
-        
+        console.log("开始获取模型");
+        setIsSchemaReady(true);  // 先设置 schema 准备就绪
+
+        // 分别获取不同来源的模型
+        getLocalModels()
+          .then(ollamaModels => {
+            console.log('获取到 Ollama 模型:', ollamaModels);
+            setModelOptions(prev => prev.map(option => 
+              option.source === ModelSource.OLLAMA 
+                ? { ...option, models: ollamaModels }
+                : option
+            ));
+          })
+          .catch(error => {
+            console.error('获取 Ollama 模型失败:', error);
+          });
+
+        getHuggingFaceModels()
+          .then(huggingfaceModels => {
+            console.log('获取到 HuggingFace 模型:', huggingfaceModels);
+            setModelOptions(prev => prev.map(option => 
+              option.source === ModelSource.HUGGINGFACE 
+                ? { ...option, models: huggingfaceModels }
+                : option
+            ));
+          })
+          .catch(error => {
+            console.error('获取 HuggingFace 模型失败:', error);
+          });
+
       } else {
         console.error('学习失败：', data.error);
       }
@@ -331,7 +372,7 @@ function App() {
     }
   }, [selectedDb]);
 
-  // 修改 handleDatabaseSelect 函数
+  // ���改 handleDatabaseSelect 函数
   const handleDatabaseSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedDatabase = e.target.value;
     setSelectedDb(selectedDatabase);

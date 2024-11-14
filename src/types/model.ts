@@ -3,8 +3,7 @@
  */
 export enum ModelSource {
   OLLAMA = 'Ollama',
-  // 预留其他模型来源
-  // OPENAI = 'OpenAI',
+  HUGGINGFACE = 'HuggingFace'
 }
 
 /**
