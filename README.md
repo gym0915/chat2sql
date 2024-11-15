@@ -46,9 +46,32 @@ npm install
 ```bash
 # 启动前端服务
 npm run build && npm run dev
-# 启动后端服务 (新终端)
-node server/index.js
 ```
+5. 配置 HuggingFace
+   - 注册 [HuggingFace](https://huggingface.co/) 账号
+   - 在 [Access Tokens](https://huggingface.co/settings/tokens) 页面生成 API Token
+   - 将 Token 配置到 .env 文件的 HUGGINGFACE_API_TOKEN 字段
+   - 配置模型:
+     - 在 .env 文件中配置 HUGGINGFACE_MODELS 字段
+     - 多个模型使用逗号分隔,例如:
+       ```
+       HUGGINGFACE_MODELS=Qwen/Qwen2.5-Coder-32B-Instruct,Qwen/Qwen2.5-72B-Instruct
+       ```
+6. 配置代理（可选）
+   - 如果需要使用代理访问 HuggingFace API，可以在 .env 文件中配置代理设置:
+     ```
+     # 代理设置
+     PROXY_HOST=127.0.0.1        # 代理服务器地址
+     PROXY_PORT=7890            # 代理服务器端口
+     PROXY_PROTOCOL=http        # 代理协议(http/https)
+     PROXY_ENABLED=true         # 是否启用代理
+     HTTPS_PROXY=http://127.0.0.1:7890  # HTTPS 代理地址
+     ```
+   - 常见代理软件端口:
+     - Clash: 7890
+     - V2Ray: 10809
+     - Shadowsocks: 1080
+
 
 ## 使用说明
 
