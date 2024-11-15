@@ -102,12 +102,21 @@ npm run build && npm run dev
 - TailwindCSS
 - React Markdown
 - Prism.js
+- Redux (状态管理)
+- Axios (HTTP 请求)
+- D3.js (数据可视化)
+- Socket.io-client (WebSocket 客户端)
 
 ### 后端
 - Node.js
 - Express
 - MySQL2
-- WebSocket
+- Sequelize (ORM)
+- WebSocket (Socket.io)
+- HuggingFace API (AI 模型集成)
+- IndexedDB (本地数据存储)
+- Jest (单元测试)
+- Swagger/OpenAPI (API 文档)
 
 
 ## 版本历史
@@ -117,6 +126,11 @@ npm run build && npm run dev
   - 支持基本的数据库连接和查询功能
   - 实现数据库表关系可视化
   - 集成 Ollama AI 模型
+- 0.2.0 (2024-11)
+  - 支持 HuggingFace API
+  - 支持多模型
+  - 支持代理
+  
 
 ## 许可证
 
