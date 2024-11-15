@@ -186,8 +186,7 @@ function App() {
         // }).join('\n\n');
 
         const allCreateSQL = data.tableStructures.map((table: any) => {
-          return `${table.createSQL}\n\n
-          }\n`;
+          return `${table.createSQL}\n\n`;
         }).join('\n\n');
         
         // 保存到浏览器的 localStorage 中

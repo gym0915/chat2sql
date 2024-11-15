@@ -5,6 +5,9 @@ import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import { dirname, resolve } from 'path';
 import { getAxiosProxyConfig } from '../utils/proxyConfig.js';
+import { HfInference } from '@huggingface/inference';
+import { HttpsProxyAgent } from 'https-proxy-agent';
+import fetch from 'node-fetch';
 
 // 获取 ES Module 的 __dirname 等价物
 const __filename = fileURLToPath(import.meta.url);
@@ -29,9 +32,6 @@ const log = {
 
 // 路径保持为 '/connect'，完整路径将是 '/api/database/connect'
 router.post('/connect', async (req, res) => {
-  console.log('Received request body:', req.body);
-  
-  // 使用前端定义的字段名
   const { server, username, password, port } = req.body;
   
   log.info('Received database connection request', {
@@ -210,7 +210,7 @@ router.post('/learn-database', async (req, res) => {
     });
 
   } catch (error) {
-    log.error('获取数据库表信息失败', error);
+    log.error('获取��据库表信息失败', error);
     res.status(500).json({ 
       success: false, 
       message: '获取数据库表信息失败',
@@ -235,6 +235,35 @@ router.get('/local-models', async (req, res) => {
   }
 });
 
+/**
+ * @description 创建代理请求函数
+ * @param {string} url - 请求URL
+ * @param {object} options - 请求选项
+ * @returns {Promise<Response>}
+ */
+const fetchWithProxy = async (url, options = {}) => {
+  const fetchOptions = { ...options };
+  
+  if (process.env.PROXY_ENABLED === 'true') {
+    console.log("使用代理PROXY_ENABLED:",process.env.PROXY_ENABLED);
+    console.log("PROXY_PROTOCOL:",process.env.PROXY_PROTOCOL);
+    console.log("PROXY_HOST:",process.env.PROXY_HOST);
+    console.log("PROXY_PORT:",process.env.PROXY_PORT);
+    const proxyUrl = `${process.env.PROXY_PROTOCOL}://${process.env.PROXY_HOST}:${process.env.PROXY_PORT}`;
+    console.log("proxyUrl:",proxyUrl);
+    const proxyAgent = new HttpsProxyAgent(proxyUrl);
+    fetchOptions.agent = proxyAgent;
+  }
+
+  fetchOptions.timeout = 30000;
+  fetchOptions.headers = {
+    ...fetchOptions.headers,
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+  };
+
+  return fetch(url, fetchOptions);
+};
+
 // 修改 SQL 生成请求的路由处理
 router.post('/generate-sql', async (req, res) => {
   const { source, model, prompt, mark } = req.body;
@@ -254,60 +283,59 @@ router.post('/generate-sql', async (req, res) => {
       
     } else if (source === 'HuggingFace') {
       try {
-        const token = process.env.HUGGINGFACE_API_TOKEN?.trim(); // 添加 trim() 去除可能的空格
-        console.log("使用的 token:", token);
-        
-        if (!token) {
-          throw new Error('HuggingFace API token not found in environment variables');
-        }
-        
-        const axiosConfig = {
-          ...getAxiosProxyConfig(),
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          validateStatus: status => status < 500 // 允许非 500 错误被正常捕获
-        };
-
-        console.log('请求配置:', {
-          url: `https://api-inference.huggingface.co/models/${model}`,
-          headers: axiosConfig.headers,
-          proxy: axiosConfig.proxy
+        // 创建 HuggingFace 客户端配置
+        const hf = new HfInference(process.env.HUGGINGFACE_API_TOKEN, {
+          fetch: fetchWithProxy
         });
 
-        const huggingfaceResponse = await axios.post(
-          `https://api-inference.huggingface.co/models/${model}`,
-          { inputs: prompt },
-          axiosConfig
-        );
+        // 将 prompt 转换为 JSON 格式
+        // const promptData = {
+        //   schema: allCreateSQL,
+        //   system: "请理解上下文和用户提出的问题进行回答，不要自己提出额外的要求",  // 添加 system prompt
+        //   instruction: "理解以上sql语句及示例数据并回答问题，你只需要回复markdown格式的sql语句，记住不要回复其他文字信息。",
+        //   question: prompt.split("问题：")[1] || prompt
+        // };
 
-        if (huggingfaceResponse.data) {
-          generatedContent = huggingfaceResponse.data[0]?.generated_text || huggingfaceResponse.data;
-        } else {
-          throw new Error('无效的 HuggingFace API 响应格式');
-        }
+        // 将 JSON 转换为字符串
+        //prompt = JSON.stringify(prompt, null, 2);
+
+        // 构建带有 system prompt 的完整提示
+        const fullPrompt = `<|im_start|>system
+请理解上下文和用户提出的问题进行回答，不要自己提出额外的要求
+<|im_end|>
+<|im_start|>user
+${prompt}
+<|im_end|>
+<|im_start|>assistant`;
+
+        // 更新 prompt 为带有 system prompt 的完整提示
+        console.log('开始调用 HuggingFace API:', {
+          model,
+          messageLength: fullPrompt.length,
+          prompt: fullPrompt
+        });
+
+        const response = await hf.textGeneration({
+          model: model,
+          inputs: fullPrompt,
+          parameters: {
+            temperature: 0.5,
+            max_new_tokens: 1024,
+            top_p: 0.7,
+            return_full_text: false
+          }
+        });
+
+        generatedContent = response.generated_text;
         console.log("HuggingFace 响应:", generatedContent);
 
       } catch (error) {
-        // 增强错误日志
         console.error('HuggingFace API 调用失败:', {
           message: error.message,
-          response: {
-            data: error.response?.data,
-            status: error.response?.status,
-            headers: error.response?.headers,
-            config: error.config
-          },
+          details: error.response?.data,
           stack: error.stack
         });
-        
-        // 返回更具体的错误信息
-        throw new Error(`调用 HuggingFace API 失败: ${
-          error.response?.data?.error || 
-          error.message || 
-          '未知错误'
-        }`);
+        throw error;
       }
     } else {
       throw new Error('不支持的模型来源');

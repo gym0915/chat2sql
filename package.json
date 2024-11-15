@@ -4,7 +4,9 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "frontend": "vite --port 5173",
+    "backend": "node server/index.js",
+    "dev": "concurrently \"npm run frontend\" \"npm run backend\"",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"
@@ -18,13 +20,15 @@
     "dotenv": "^16.4.5",
     "https-proxy-agent": "^7.0.5",
     "lucide-react": "^0.344.0",
+    "node-fetch": "^2.7.0",
     "prismjs": "^1.29.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-markdown": "^9.0.1",
     "react-syntax-highlighter": "^15.6.1",
     "react-table": "^7.8.0",
-    "remark-gfm": "^4.0.0"
+    "remark-gfm": "^4.0.0",
+    "concurrently": "^8.2.2"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.1",
