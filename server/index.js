@@ -37,13 +37,26 @@ app.use(express.urlencoded({ extended: true }));  // 解析 URL 编码的请求�
 app.get('/api/local-models', async (req, res) => {
   console.log('Local models route handler called (in index.js)');
   try {
-    const response = await axios.get('http://localhost:11434/api/tags');
+    const response = await axios.get('http://127.0.0.1:11434/api/tags');
     const models = response.data.models.map(model => model.name);
-    console.log("models:",models);
+    console.log("models:", models);
     res.json({ models });
   } catch (error) {
-    console.error('获取本地模型失败:', error);
-    res.status(500).json({ error: '获取本地模型失败' });
+    console.error('获取本地模型失败:', {
+      message: error.message,
+      code: error.code,
+      errno: error.errno,
+      host: error.address,
+      port: error.port
+    });
+    
+    res.status(500).json({ 
+      error: '获取本地模型失败',
+      details: {
+        message: error.message,
+        code: error.code
+      }
+    });
   }
 });
 
