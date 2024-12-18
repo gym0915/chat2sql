@@ -13,13 +13,22 @@ import fetch from 'node-fetch';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// 修改这里：配置 dotenv，使用正确的路径
+// 添加调试日志
+console.log('当前目录:', __dirname);
+console.log('尝试加载的 .env 路径:', resolve(__dirname, '../../.env'));
+
+// 修改 dotenv 配置
 dotenv.config({ 
-  path: resolve(__dirname, '../../.env') // 注意这里改为 ../../.env
+  path: resolve(__dirname, '../../.env'),
+  debug: true // 添加调试模式
 });
 
 // 添加环境变量加载确认日志
-console.log('环境变量 HUGGINGFACE_MODELS:', process.env.HUGGINGFACE_MODELS);
+console.log('环境变量加载状态:', {
+  HUGGINGFACE_MODELS: process.env.HUGGINGFACE_MODELS,
+  HUGGINGFACE_API_TOKEN: process.env.HUGGINGFACE_API_TOKEN,
+  NODE_ENV: process.env.NODE_ENV
+});
 
 const router = express.Router();
 
@@ -210,7 +219,7 @@ router.post('/learn-database', async (req, res) => {
     });
 
   } catch (error) {
-    log.error('获取��据库表信息失败', error);
+    log.error('获取数据库表信息失败', error);
     res.status(500).json({ 
       success: false, 
       message: '获取数据库表信息失败',
@@ -437,11 +446,13 @@ router.get('/huggingface-models', async (req, res) => {
     const modelsStr = process.env.HUGGINGFACE_MODELS;
     
     // 添加更详细的日志
-    console.log('读取到的环境变量值:', modelsStr);
+    console.log('环境变量状态:', {
+      HUGGINGFACE_MODELS: process.env.HUGGINGFACE_MODELS,
+      ENV_PATH: resolve(__dirname, '../../.env')
+    });
     
     if (!modelsStr) {
-      console.error('环境变量 HUGGINGFACE_MODELS 未设置或为空');
-      throw new Error('未在环境变量中设置 HUGGINGFACE_MODELS');
+      throw new Error('环境变量 HUGGINGFACE_MODELS 未设置或为空');
     }
 
     // 将字符串转换为数组 (假设环境变量中模型名用逗号分隔)
@@ -454,7 +465,8 @@ router.get('/huggingface-models', async (req, res) => {
     console.error('获取 HuggingFace 模型失败:', {
       message: error.message,
       code: error.code,
-      env: process.env.HUGGINGFACE_MODELS // 添加环境变量值到错误日志
+      env: process.env.HUGGINGFACE_MODELS, // 添加环境变量值到错误日志
+      envPath: resolve(__dirname, '../../.env')
     });
 
     res.status(500).json({ 

@@ -1,12 +1,25 @@
 import express from 'express';
 import cors from 'cors';
 import { fileURLToPath } from 'url';
-import { dirname } from 'path';
+import { dirname, resolve } from 'path';
 import databaseRoutes from './routes/database.js';
 import axios from 'axios';
+import dotenv from 'dotenv';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+
+// 加载环境变量
+dotenv.config({ 
+  path: resolve(__dirname, '../.env'),
+  debug: true
+});
+
+// 添加环境变量加载确认
+console.log('服务器启动时的环境变量:', {
+  PORT: process.env.PORT,
+  HUGGINGFACE_MODELS: process.env.HUGGINGFACE_MODELS
+});
 
 const app = express();
 
