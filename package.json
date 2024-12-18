@@ -16,8 +16,11 @@
     "@types/prismjs": "^1.26.5",
     "axios": "^1.6.7",
     "clsx": "^2.1.0",
+    "concurrently": "^8.2.2",
     "d3": "^7.9.0",
     "dotenv": "^16.4.5",
+    "echarts": "^5.5.1",
+    "echarts-for-react": "^3.0.2",
     "https-proxy-agent": "^7.0.5",
     "lucide-react": "^0.344.0",
     "node-fetch": "^2.7.0",
@@ -27,8 +30,7 @@
     "react-markdown": "^9.0.1",
     "react-syntax-highlighter": "^15.6.1",
     "react-table": "^7.8.0",
-    "remark-gfm": "^4.0.0",
-    "concurrently": "^8.2.2"
+    "remark-gfm": "^4.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.1",

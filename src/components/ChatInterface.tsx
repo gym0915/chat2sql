@@ -1,14 +1,32 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import axios from 'axios';
-import { useTable, usePagination } from 'react-table';
+import axios, { AxiosError } from 'axios';
+import { useTable, usePagination, Column, Row, Cell, HeaderGroup } from 'react-table';
 import { Clipboard, Play, Check, User, Code, Loader, PlusCircle, ChevronRight } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { tomorrow } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import Toast from './Toast'; // 导入 Toast 组件
+import Prism from 'prismjs';
+import Toast from './Toast';
 import { ModelSource, ModelOption, SelectedModel } from '../types/model';
 import { logger } from '../utils/logger';
+import { ChartViewer } from './DataVisualization/ChartViewer';
+
+// 添加类型定义
+declare module 'react-table' {
+  export interface TableOptions<D extends object> extends UseTableOptions<D> {}
+  export interface TableInstance<D extends object = {}> extends UseTableInstanceProps<D> {}
+  export interface TableState<D extends object = {}> extends UseTableState<D> {}
+  export interface Column<D extends object = {}> extends UseColumnOptions<D> {}
+}
+
+interface CodeProps {
+  node?: any;
+  inline?: boolean;
+  className?: string;
+  children: React.ReactNode;
+  [key: string]: any;
+}
 
 interface ChatInterfaceProps {
   modelOptions: ModelOption[];
@@ -24,6 +42,8 @@ interface Message {
 
 // 新增表格组件
 const SQLResultTable: React.FC<{ resultData: any[] }> = ({ resultData }) => {
+  const [showChart, setShowChart] = useState(false);
+
   // 如果结果为空数组，创建一个带有默认结构的空数据
   const processedData = useMemo(() => {
     if (resultData.length === 0) {
@@ -84,7 +104,7 @@ const SQLResultTable: React.FC<{ resultData: any[] }> = ({ resultData }) => {
   } = useTable(
     {
       columns,
-      data: processedData,  // 使用处理后的数据
+      data: processedData,
       initialState: { pageIndex: 0, pageSize: 10 }
     },
     usePagination
@@ -94,11 +114,11 @@ const SQLResultTable: React.FC<{ resultData: any[] }> = ({ resultData }) => {
     <div className="overflow-x-auto">
       <table {...getTableProps()} className="min-w-full divide-y divide-gray-200">
         <thead className="bg-gray-50">
-          {headerGroups.map(headerGroup => {
+          {headerGroups.map((headerGroup: HeaderGroup<any>) => {
             const { key, ...restHeaderGroupProps } = headerGroup.getHeaderGroupProps();
             return (
               <tr key={key} {...restHeaderGroupProps}>
-                {headerGroup.headers.map(column => {
+                {headerGroup.headers.map((column: Column<any>) => {
                   const { key, ...restColumnProps } = column.getHeaderProps();
                   return (
                     <th
@@ -115,12 +135,12 @@ const SQLResultTable: React.FC<{ resultData: any[] }> = ({ resultData }) => {
           })}
         </thead>
         <tbody {...getTableBodyProps()} className="bg-white divide-y divide-gray-200">
-          {page.map(row => {
+          {page.map((row: Row<any>) => {
             prepareRow(row);
             const { key, ...restRowProps } = row.getRowProps();
             return (
               <tr key={key} {...restRowProps}>
-                {row.cells.map(cell => {
+                {row.cells.map((cell: Cell<any>) => {
                   const { key, ...restCellProps } = cell.getCellProps();
                   return (
                     <td
@@ -162,8 +182,25 @@ const SQLResultTable: React.FC<{ resultData: any[] }> = ({ resultData }) => {
           >
             Next
           </button>
+          <button
+            onClick={() => setShowChart(true)}
+            className="ml-2 px-3 py-1 border rounded-md text-sm text-gray-500 hover:bg-gray-100"
+            title="可视化"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zm6-4a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zm6-3a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
+            </svg>
+          </button>
         </div>
       </div>
+
+      {showChart && (
+        <ChartViewer
+          data={processedData}
+          columns={columns.map(col => col.Header as string)}
+          onClose={() => setShowChart(false)}
+        />
+      )}
     </div>
   );
 };
@@ -356,10 +393,10 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ modelOptions, selectedDat
       }
     } catch (error) {
       console.error('执行 SQL 失败:', error);
-      // 创建一个错误结果对象
-      console.error("error1:", error.response.data.code);
+      const axiosError = error as AxiosError;
+      console.error("error1:", axiosError.response?.data?.code);
       const errorResult = [{
-        error: error instanceof Error ? error.response.data.code : '执行 SQL 时发生未知错误',
+        error: axiosError.response?.data?.code || '执行 SQL 时发生未知错误',
         timestamp: new Date().toLocaleString()
       }];
       
@@ -419,10 +456,10 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ modelOptions, selectedDat
               children={message.content}
               remarkPlugins={[remarkGfm]}
               components={{
-                code({ node, inline, className, children, ...props }) {
+                code({ node, inline, className, children, ...props }: CodeProps) {
                   const match = /language-(\w+)/.exec(className || '');
                   return !inline && match ? (
-                    <div className="overflow-x-auto max-w-full"> {/* 修改这里 */}
+                    <div className="overflow-x-auto max-w-full">
                       <SyntaxHighlighter
                         style={{}}
                         language={match[1]}
@@ -432,10 +469,10 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ modelOptions, selectedDat
                           background: 'transparent',
                           padding: '1rem',
                           margin: 0,
-                          whiteSpace: 'pre',       // 添加这行
-                          wordWrap: 'normal',      // 添加这行
-                          overflowX: 'auto',       // 添加这行
-                          minWidth: '100%',        // 添加这行
+                          whiteSpace: 'pre',
+                          wordWrap: 'normal',
+                          overflowX: 'auto',
+                          minWidth: '100%',
                         }}
                         {...props}
                       >
