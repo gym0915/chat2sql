@@ -130,6 +130,9 @@ npm run build && npm run dev
   - 支持 HuggingFace API
   - 支持多模型
   - 支持代理
+- 0.3.0 (2024-12)
+  - 增加sql 查询结果可视化
+  - 修复 bug
   
 
 ## 许可证
