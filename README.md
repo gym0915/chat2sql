@@ -44,7 +44,7 @@ npm install
 
 4. 启动服务
 ```bash
-# 启动前端服务
+# 启动前后端服务
 npm run build && npm run dev
 ```
 5. 配置 HuggingFace
